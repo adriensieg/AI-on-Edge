@@ -1,8 +1,23 @@
 # AI-on-Edge
 How to run AI on Edge
 
-
 ## Infrastructure Set Up
+- IP cameras (AXIS P3215 and AXIS P3265-LV) capture real-time video.
+- Each camera provides an **RTSP stream** accessible via a **local network**.
+- The cameras are connected via **PoE Ethernet** to avoid power limitations.
+- **RTSP Connector (OpenCV)**: Opens RTSP streams and continuously reads frames.
+- **Frame Buffer** (**Multi-Threaded Queue**): Stores frames **in memory** before processing.
+- **Frame Preprocessing**: Frames are resized (e.g., **640x360**), converted to a suitable format, and optionally timestamped.
+- **Publish to Processing Queue**: Frames are pushed to a **queue** for backend processing.
+- **Frame Fetcher** (Async Queue): Retrieves frames from the processing queue.
+- Raw frames are stored in H.264/H.265 format for efficient storage.
+- Rolling Buffer Management: Deletes old footage when storage reaches capacity
+
+- RTSP camera sends a continuous video stream
+  - Resolution: 1080p (1920×1080)
+  - FPS: 30 (standard CCTV)
+  - Encoding: H.264
+  - Bitrate: ~4 Mbps per stream
 
 ## Data Collection & Labeling
 
@@ -30,19 +45,19 @@ How to run AI on Edge
 ## Model Optimization
 
 ### Model Distillation
-- Choose teacher (original YOLO model) and student (MobileNet+YOLO-like) architecture.
-- Use knowledge distillation loss: soft logits + ground truth.
+- Choose teacher (original `YOLO` model) and student (`MobileNet+YOLO`-like) architecture.
+- Use knowledge distillation `loss`: `soft logits` + `ground truth`.
 - Train student model with distilled dataset.
 - Evaluate F1/accuracy tradeoff.
 
 ### Quantization
 - Apply Post-Training Quantization (PTQ) using torch.quantization or ONNX Runtime.
-- Test INT8 and FP16 variants.
+- Test `INT8` and `FP16` variants.
 - Benchmark inference latency and accuracy.
 - Validate quantized model with edge test set.
 
 ## Model Format and Export
-- Choose final model format: ONNX
+- Choose final model format: `ONNX`
 - Store final model artifacts in GCS with version tags
 
 ## Inference
@@ -65,6 +80,159 @@ How to run AI on Edge
   - Batch inference (if multiple cams)
   - Use `multiprocessing.Queue` for decoupled pipeline stages
 - Optimize pipeline with `queue.Queue` for inter-process communication.
+
+
+## Event-Driven NATS Publisher
+- Install and configure `nats-py` client.
+- Define topic: fries.station.count.update
+- Payload schema: {"timestamp": "...", "count": n, "delta": ±1}
+- Only publish on count change event.
+- Add retries and logging on publish failures
+- Secure with authentication if needed
+
+## Web Visualization Service
+- Web app using FastAPI + Jinja2 or ReactJS frontend
+- Show current fries count, delta, last change timestamp
+- Provide optional live video stream with overlay (bbox visualization)
+- `RTSP` to `MJPEG` proxy via `ffmpeg` or `opencv`→`FastAPI` stream.
+- REST endpoints:
+  - `/count` – return latest count
+  - `/stream` – return MJPEG stream
+  - `/events` – list recent count change events
+ 
+
+
+Containerization and Deployment
+Create Dockerfile for app:
+
+Use python:3.11-slim
+
+Install fastapi, uvicorn, opencv, nats-py, onnxruntime, etc.
+
+ 
+
+ 
+
+Build Docker image and push to GCR.
+
+ 
+
+ 
+
+Define Kubernetes manifests:
+
+Deployment: edge app
+
+Service: expose internal API
+
+ConfigMap: model path, NATS URL
+
+PVC: persistent volume for logs
+
+ 
+
+ 
+
+Use Helm or kustomize for versioned deployment.
+
+ 
+
+ 
+
+Apply Kubernetes resource limits:
+
+requests: {cpu: 500m, memory: 512Mi}
+
+limits: {cpu: 2, memory: 2Gi}
+
+ 
+
+ 
+
+Monitoring and Logging
+Add structured logs with loguru or structlog
+
+ 
+
+ 
+
+Log each inference, RTSP failure, publish event
+
+ 
+
+ 
+
+Integrate with GCP Logging
+
+ 
+
+ 
+
+AddNew Relicmetrics:
+
+inference_duration_seconds
+
+frames_processed_total
+
+count_change_events_total
+
+ 
+
+ 
+
+Expose /metrics endpoint for scraping.
+
+ 
+
+ 
+
+Performance Estimation & Optimization
+Benchmark model size, latency, and memory footprint (CPU-only)
+
+Run edge inference benchmark: FPS, CPU usage, latency
+
+ 
+
+ 
+
+Estimate hardware requirements:
+
+Image size: 640x640
+
+Inference time: <300ms/frame
+
+CPU: 4-core minimum
+
+RAM: 4 GB minimum
+
+Bandwidth: negligible (local-only inference)
+
+ 
+
+ 
+
+CI/CD and Logging
+Implement CI pipeline (GitHub Actions or Cloud Build)
+
+ 
+
+ 
+
+Unit test: inference, RTSP stream, event publishing
+
+ 
+
+ 
+
+Logging:
+
+Log model predictions with timestamps
+
+Log NATS events sent
+
+ 
+
+ 
 
 
 
