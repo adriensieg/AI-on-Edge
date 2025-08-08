@@ -100,131 +100,45 @@ How to run AI on Edge
   - `/stream` – return MJPEG stream
   - `/events` – list recent count change events
  
+## Containerization and Deployment
+- Create Dockerfile for app:
+  - Use python:3.11-slim
+  - Install `fastapi`, `uvicorn`, `opencv`, `nats-py`, `onnxruntime`, etc.
+- Build Docker image and push to GCR.
+- Define Kubernetes manifests:
+  - `Deployment`: edge app
+  - `Service`: expose internal API
+  - `ConfigMap`: model path, NATS URL
+  - `PVC`: persistent volume for logs
+- Use Helm or kustomize for versioned deployment.
+- Apply Kubernetes resource limits:
+  - `requests`: `{cpu: 500m, memory: 512Mi}`
+  - `limits`: `{cpu: 2, memory: 2Gi}`
 
-
-Containerization and Deployment
-Create Dockerfile for app:
-
-Use python:3.11-slim
-
-Install fastapi, uvicorn, opencv, nats-py, onnxruntime, etc.
-
- 
-
- 
-
-Build Docker image and push to GCR.
-
- 
-
- 
-
-Define Kubernetes manifests:
-
-Deployment: edge app
-
-Service: expose internal API
-
-ConfigMap: model path, NATS URL
-
-PVC: persistent volume for logs
-
- 
-
- 
-
-Use Helm or kustomize for versioned deployment.
-
- 
-
- 
-
-Apply Kubernetes resource limits:
-
-requests: {cpu: 500m, memory: 512Mi}
-
-limits: {cpu: 2, memory: 2Gi}
-
- 
-
- 
-
-Monitoring and Logging
-Add structured logs with loguru or structlog
-
- 
-
- 
-
-Log each inference, RTSP failure, publish event
-
- 
-
- 
-
-Integrate with GCP Logging
-
- 
-
- 
-
-AddNew Relicmetrics:
-
-inference_duration_seconds
-
-frames_processed_total
-
-count_change_events_total
-
- 
-
- 
-
+## Monitoring and Logging
+- Add structured logs with loguru or structlog
+- Log each inference, RTSP failure, publish event
+- Integrate with GCP Logging
+- Add New Relic metrics:
+  - inference_duration_seconds
+  - frames_processed_total
+  - count_change_events_total
 Expose /metrics endpoint for scraping.
 
- 
+## Performance Estimation & Optimization
+- Benchmark model size, latency, and memory footprint (CPU-only)
+- Run edge inference benchmark: FPS, CPU usage, latency
+- Estimate hardware requirements:
+  - Image size: 640x640
+  - Inference time: <300ms/frame
+  - CPU: 4-core minimum
+  - RAM: 4 GB minimum
+  - Bandwidth: negligible (local-only inference)
 
- 
-
-Performance Estimation & Optimization
-Benchmark model size, latency, and memory footprint (CPU-only)
-
-Run edge inference benchmark: FPS, CPU usage, latency
-
- 
-
- 
-
-Estimate hardware requirements:
-
-Image size: 640x640
-
-Inference time: <300ms/frame
-
-CPU: 4-core minimum
-
-RAM: 4 GB minimum
-
-Bandwidth: negligible (local-only inference)
-
- 
-
- 
-
-CI/CD and Logging
-Implement CI pipeline (GitHub Actions or Cloud Build)
-
- 
-
- 
-
-Unit test: inference, RTSP stream, event publishing
-
- 
-
- 
-
-Logging:
+## CI/CD and Logging
+- Implement CI pipeline (GitHub Actions or Cloud Build)
+- Unit test: inference, RTSP stream, event publishing
+- Logging:
 
 Log model predictions with timestamps
 
