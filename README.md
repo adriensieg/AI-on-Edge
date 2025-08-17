@@ -1,5 +1,5 @@
 # AI-on-Edge
-How to run AI on Edge
+How to run a YOLO-like model on Edge
 
 ## Infrastructure Set Up
 - IP cameras (AXIS P3215 and AXIS P3265-LV) capture real-time video.
@@ -139,11 +139,163 @@ Expose /metrics endpoint for scraping.
 - Implement CI pipeline (GitHub Actions or Cloud Build)
 - Unit test: inference, RTSP stream, event publishing
 - Logging:
+  - Log model predictions with timestamps
+  - Log NATS events sent
 
-Log model predictions with timestamps
+# YOLO-like model deployment on K3s on Raspberry Pi 4
 
-Log NATS events sent
+## Objectives
+- The primary **business objective** is to assist users in **accurately identifying the appropriate waste bin for disposal when uncertain**.
+- The system will be **deployed on a Raspberry Pi** equipped with a **5MP camera**.
+- Users will **present the waste item** to the **camera**, and the **Raspberry Pi** will **infer the correct bin category** using the trained model.
+- The **YOLOv8-nano trash detector** against an **RTSP camera** will run on a **Raspberry Pi 4 (8 GB)** using **k3s (lightweight Kubernetes)** with one node. 
 
+**Conditions**: 
+- I trained a **YOLOv8-nano model** using a **Garbage Classification Dataset**
+- The dataset comprises **2,467 labeled images** across six categories:
+  - Cardboard (393 images)
+  - Glass (491 images)
+  - Metal (400 images)
+  - Paper (584 images)
+  - Plastic (472 images)
+  - Trash (127 images)
+ 
+## Deployment
+
+- I want to deploy the model on a Kubernetes cluster K3s for Raspberry pi 4 with one node
+  - https://medium.com/@stevenhoang/step-by-step-guide-installing-k3s-on-a-raspberry-pi-4-cluster-8c12243800b9
+- I want to deploy my application using **GGitOps with ArgoCD**G
+
+ ## Features:
+ - Pulls our YOLOv8-nano model (ONNX for speed and simplicity on Pi CPU),
+ - Grabs frames from our RTSP camera,
+ - Does real-time inference on CPU,
+ - Exposes an HTTP MJPEG stream of annotated frames (and a JSON endpoint) via Traefik Ingress (bundled with k3s) or NodePort.
+ - The end user can view annotated video frames on a display screen.
+ - A web application built with Python (FastAPI) and HTML/vanilla JavaScript is exposed, enabling real-time visualization of the annotated frames, including the detected garbage category label. - Counts how many objects have been classified per category
+
+## Main concepts:
+- OS prep
+- k3s install
+- Container build (arm64)
+- FastAPI app (RTSP → ONNX → annotate → MJPEG/JSON)
+- Kubernetes manifests:
+  - Deployment
+  - Service
+  - Ingress
+  - Config
+  - Secret
+  - HPA
+  - PodSecurity
+  - NetworkPolicy)
+- GitOps repo layout + Argo CD Application
+- Monitoring/logging
+- Perf tuning, and troubleshooting.
+
+ - 64-bit OS, cgroups enabled, governor performance
+ - k3s installed (Traefik enabled)
+ - App builds for linux/arm64, runs locally
+ - Push image to registry
+ - Argo CD installed; Application synced to repo
+ - RTSP reachable; MJPEG live at `/mjpeg`; JSON at `/detections`
+ - Business logic: class → bin label shown in UI
+ - Metrics scraped and logs healthy
+ - Thermals OK under sustained load
+
+## Hardware & OS Prep (Raspberry Pi 4)
+
+```mermaid
+graph TD
+
+    %% Cluster & Nodes
+    A[Cluster] --> B1[Node #1]
+    A[Cluster] --> B2[Node #2]
+
+    %% Control Plane
+    A --- CP[Control Plane]
+    CP --> API[API Server]
+    CP --> Sched[Scheduler]
+    CP --> CtrlMgr[Controller Manager]
+    CP --> ETCD[(etcd - Cluster State DB)]
+    CP --> AC[Admission Controllers]
+
+    %% Workloads
+    CP --> D1[Deployment]
+    CP --> D2[ReplicaSet]
+    CP --> D3[StatefulSet]
+    CP --> D4[DaemonSet]
+    CP --> D5[Job / CronJob]
+
+    %% Pods
+    D1 --> P1[Pod]
+    D1 --> P2[Pod]
+    D3 --> P3[Stateful Pod]
+    D4 --> P4[Daemon Pod]
+    D5 --> P5[Job Pod]
+
+    %% Containers inside Pods
+    P1 --> C1[App Container]
+    P1 --> C2[Sidecar Container]
+    P1 --> InitC[Init Container]
+    P1 --> EphiC[Ephemeral Container]
+
+    P2 --> C3[App Container]
+    P3 --> C4[DB Container]
+    P4 --> C5[Logging Agent Container]
+
+    %% Networking
+    A --> S1[Service]
+    S1 --> P1
+    S1 --> P2
+    S1 --> P3
+    A --> Ingress[Ingress]
+    Ingress --> S1
+    A --> NetPol[NetworkPolicy]
+
+    %% Config & Secrets
+    A --> CM[ConfigMap]
+    A --> Sec[Secret]
+    CM --> P1
+    Sec --> P2
+
+    %% Storage
+    A --> PV[PersistentVolume]
+    PV --> PVC[PersistentVolumeClaim]
+    PVC --> P3
+
+    %% Autoscaling
+    CP --> HPA[Horizontal Pod Autoscaler]
+    CP --> VPA[Vertical Pod Autoscaler]
+    CP --> CA[Cluster Autoscaler]
+
+    HPA --> D1
+    VPA --> P3
+    CA --> B2
+
+    %% Scheduling & Placement
+    A --> TAINT[Taints/Tolerations]
+    A --> AFF[Affinity / Anti-Affinity]
+    A --> PDB[Pod Disruption Budget]
+
+    TAINT --> P2
+    AFF --> P3
+    PDB --> D1
+
+    %% Security
+    A --> RBAC[Role-Based Access Control]
+    CP --> AC
+
+    %% Extensibility
+    CP --> CRD[Custom Resource Definition]
+    CRD --> OP[Operator]
+
+    OP --> ComplexApp[Managed App (e.g., Kafka, MongoDB)]
+
+    %% Debugging Helpers
+    P1 --> Debug1[Ephemeral Container]
+    P1 --> Debug2[Init Container]
+    P1 --> Debug3[Sidecar Container]
+```
  
 
  
