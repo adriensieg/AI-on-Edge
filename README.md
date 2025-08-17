@@ -289,7 +289,7 @@ graph TD
     CP --> CRD[Custom Resource Definition]
     CRD --> OP[Operator]
 
-    OP --> ComplexApp[Managed App (e.g., Kafka, MongoDB)]
+    OP --> ComplexApp["Managed App - Kafka MongoDB"]
 
     %% Debugging Helpers
     P1 --> Debug1[Ephemeral Container]
