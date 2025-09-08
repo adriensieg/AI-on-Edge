@@ -39,7 +39,7 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
    - Ensure sufficient RAM headroom to avoid swap.
    - Reduce memory latency: prefer single-bank allocations, lock important pagesinto RAM (`mlock`).
 - **Cache (L1/L2/L3)**
-   - Structure data to maximize $$\color{blue}cache locality (tensor layout matters)$$. Tensor layout tuning (e.g., NHWC vs NCHW).
+   - Structure data to maximize cache locality (tensor layout matters). Tensor layout tuning (e.g., NHWC vs NCHW).
       - `N`: Number of data samples.
       - `C`: Image channels. A red-green-blue (RGB) image will have 3 channels.
       - `H`: Image height.
