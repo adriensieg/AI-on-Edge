@@ -37,9 +37,13 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
    - Quantized models (`int8`, `fp16`)
 - **Memory (DRAM)**
    - Ensure sufficient RAM headroom to avoid swap.
-   - Reduce memory latency: prefer \color{red}single-bank allocations, lock important pages into RAM (mlock).
+   - Reduce memory latency: prefer $$\color{blue}single-bank allocations$$, $$\color{blue}lock important pages$$ into RAM (`mlock`).
 - **Cache (L1/L2/L3)**
-   - Structure data to maximize cache locality (tensor layout matters). Tensor layout tuning (e.g., NHWC vs NCHW).
+   - Structure data to maximize $$\color{blue}cache locality (tensor layout matters)$$. Tensor layout tuning (e.g., NHWC vs NCHW).
+      - `N`: Number of data samples.
+      - `C`: Image channels. A red-green-blue (RGB) image will have 3 channels.
+      - `H`: Image height.
+      - `W`: Image width.
    - Warm-cache core pinning.
    - Micro-level wins, not first-order.
    - Pin inference threads so they reuse warm caches.
