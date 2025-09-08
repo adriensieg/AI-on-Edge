@@ -1,9 +1,11 @@
+# Computer Vision on Edge
 
+## The layout of the project
 
 ```
 yolo-detection-system/
-├── main.py                          # Application entry point
-├── requirements.txt                 # Project dependencies
+├── main.py                         # Application entry point
+├── requirements.txt                # Project dependencies
 ├── .env                            # Environment variables (create manually)
 ├── README.md                       # Project documentation
 │
@@ -26,7 +28,7 @@ yolo-detection-system/
 │   │   ├── stream_manager.py      # Video streaming orchestration
 │   │   └── websocket_manager.py   # WebSocket connection management
 │   │
-│   └── api/                        # API routes and endpoints
+│   └── api/                       # API routes and endpoints
 │       ├── __init__.py
 │       ├── main.py                # FastAPI app factory
 │       └── routes/                # Route modules
@@ -35,8 +37,8 @@ yolo-detection-system/
 │           ├── video.py           # Video streaming routes
 │           └── api.py             # REST API routes
 │
-├── static/                         # Static files (CSS, JS, images)
-├── templates/                      # Jinja2 HTML templates
-├── models/                         # YOLO model files
+├── static/                        # Static files (CSS, JS, images)
+├── templates/                     # Jinja2 HTML templates
+├── models/                        # YOLO model files
 └── logs/                          # Application logs
 ```
