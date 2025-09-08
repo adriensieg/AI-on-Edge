@@ -37,7 +37,7 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
    - Quantized models (`int8`, `fp16`)
 - **Memory (DRAM)**
    - Ensure sufficient RAM headroom to avoid swap.
-   - Reduce memory latency: prefer #blue[single-bank allocations], #blue[lock important pages] into RAM (`mlock`).
+   - Reduce memory latency: prefer $$\color{blue}[single-bank allocations]$$, $$\color{blue}[lock important pages]$$ into RAM (`mlock`).
 - **Cache (L1/L2/L3)**
    - Structure data to maximize $$\color{blue}cache locality (tensor layout matters)$$. Tensor layout tuning (e.g., NHWC vs NCHW).
       - `N`: Number of data samples.
@@ -52,20 +52,20 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
    - Use `tmpfs/ramfs` for transient data.
  
  - **Data Ingestion**
-   - Storage layout: Keep datasets/recordings on NVMe; avoid network filesystems for live inference. Increase file readahead for sequential reads: sudo blockdev --setra 4096 /dev/nvme0n1.
+   - Storage layout: Keep datasets/recordings on NVMe; avoid network filesystems for live inference. Increase file readahead for sequential reads: `sudo blockdev --setra 4096 /dev/nvme0n1`.
    - **Use hardware decode**: NVDEC via `GStreamer`/`FFmpeg` (e.g., `h264_cuvid`, `nvh264dec`) or `NVIDIA DeepStream`.
       - Avoid CPU decoding if you have an NVIDIA GPU.
    - **Zero/low-copy pipelines**:
-      - Prefer DMABUF / GPU surface handoff (GStreamer) to keep frames on GPU.
-      - In PyTorch, use pinned memory (pin_memory=True) and non_blocking=True on .to(device).
-   - **Prefetch & parallelize**: DataLoader with enough workers (num_workers ~= cores/4…cores/2), prefetch_factor tuned; or use NVIDIA DALI to move aug/decode to GPU.
+      - Prefer `DMABUF` / `GPU surface handoff` (`GStreamer`) to keep frames on GPU.
+      - In PyTorch, use pinned memory (`pin_memory=True`) and `non_blocking=True` on `.to(device)`.
+   - **Prefetch & parallelize**: DataLoader with enough workers (`num_workers` ~= cores/4…cores/2), `prefetch_factor` tuned; or use NVIDIA DALI to move aug/decode to GPU.
      
 - **Network interface (if streaming camera data remotely)**
    - Minimize packet copying (use kernel zero-copy: `sendfile`, `mmap`).
    - Reduce IRQ load by tuning NIC offloads and coalescing.
-   - I/O-aware resizing: Pre-resize frames close to network size (e.g., 640×640) with GPU ops (NPP/CV-CUDA) or hardware decoders to avoid CPU bottlenecks.
-   - Reduce packet processing overhead: enable GRO/LRO, and tune RPS/RFS.
-   - Busy-poll for low latency (carefully): net.core.busy_poll, net.core.busy_read.
+   - I/O-aware resizing: Pre-resize frames close to network size (e.g., `640×640`) with GPU ops (NPP/CV-CUDA) or hardware decoders to avoid CPU bottlenecks.
+   - Reduce packet processing overhead: enable `GRO`/`LRO`, and tune `RPS/RFS`.
+   - Busy-poll for low latency (carefully): `net.core.busy_poll`, `net.core.busy_read`.
    - Keep the NIC’s IRQs pinned off your hot app cores.
 
 #### Kernel & OS-Level
@@ -148,7 +148,7 @@ Tile / stride: For high-res cameras, consider tiling with overlap to keep per-ti
 - and match the model’s expected input efficiently.
 
 ##### 1. Image Sizing & Resizing
-- Resize to network input size (e.g., 640×640) as early as possible.
+- Resize to network input size (e.g., `640×640`) as early as possible.
 - Use GPU-accelerated resizing:
 - NVIDIA CV-CUDA or NPP libraries.
 - OpenCV with CUDA (cv2.cuda.resize).
