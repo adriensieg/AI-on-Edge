@@ -68,7 +68,7 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
    - Busy-poll for low latency (carefully): `net.core.busy_poll`, `net.core.busy_read`.
    - Keep the NIC’s IRQs pinned off your hot app cores.
 
-#### Kernel & OS-Level
+## Kernel & OS-Level
 - **Scheduler**
    - Use `SCHED_FIFO` or `SCHED_RR` for inference threads.
       - `SCHED_FIFO` for inference thread.
@@ -93,7 +93,7 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
 - **Transparent memory features**
    - Disable KSM (Kernel Samepage Merging) to avoid surprises.
 
-#### Runtime / Libraries
+## Runtime / Libraries
 - **Python runtime**
    - Use PyPy or Cythonized extensions for hot paths.
    - Disable GIL overhead by pushing compute-heavy loops into C/C++ (via PyTorch/TFLite C API).
@@ -110,7 +110,7 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
 - **Garbage collection**
    - Already disabled in prod, good.
 
-#### Application & Data Flow
+## Application & Data Flow
 - **Frame handling**
    - Zero-copy capture (e.g., V4L2 mmap).
    - Resize/preprocess on GPU/NPU if available.
@@ -133,14 +133,14 @@ NMS on GPU (built-in for TRT engines) to avoid CPU bottlenecks. If staying in Py
 
 Tile / stride: For high-res cameras, consider tiling with overlap to keep per-tile size near model size (if you need small objects at distance), and fuse results.
     
-### Observability & Tuning
+## Observability & Tuning
 - Latency per frame (end-to-end, not just inference).
 - Cache misses (via perf stat).
 - IRQ distribution (via /proc/interrupts).
 - Thermal throttling (via vcgencmd measure_temp).
 - Page faults (major/minor).
 
-### Image Processing & Pre-processing Optimization
+## Image Processing & Pre-processing Optimization
 
 **The goal is**: 
 - minimize CPU bottlenecks,
@@ -174,9 +174,9 @@ Tile / stride: For high-res cameras, consider tiling with overlap to keep per-ti
 - For streaming: leverage zero-copy DMA (dmabuf) with GStreamer + DeepStream.
 
 
-### YOLO Model Optimization (Inference Focus)
+## YOLO Model Optimization (Inference Focus)
 
-##### 1. Model Export & Runtime
+### 1. Model Export & Runtime
 - TensorRT Engine (preferred for NVIDIA GPUs):
 - Export to TRT with FP16 or INT8.
 - Example: yolo export model=yolov8n.pt format=engine imgsz=640 half=True
@@ -184,36 +184,36 @@ Tile / stride: For high-res cameras, consider tiling with overlap to keep per-ti
 - Torch-TensorRT for PyTorch integration.
 - For CPU inference only: export to OpenVINO (Intel) or ONNX Runtime (CPU EP).
 
-##### 2. Precision Optimization
+### 2. Precision Optimization
 - FP16 (half-precision) → ~2× speedup on supported GPUs.
 - INT8 quantization (with calibration dataset) → ~3–4× speedup with minimal accuracy drop.
 
-##### 3. Input Resolution
+### 3. Input Resolution
 - Use the smallest image size that still meets detection accuracy:
   - 320×320 or 416×416 for fast, low-latency inference.
   - 640×640 default for balanced accuracy/speed.
   - Larger sizes (1280+) only if needed for small/distant objects.
 
-##### 4. Model Variants
+### 4. Model Variants
 Choose the right YOLO variant:
-n (nano) or s (small) for edge devices.
-m, l, x for higher accuracy on GPUs.
+- n (nano) or s (small) for edge devices.
+- m, l, x for higher accuracy on GPUs.
 Consider YOLOv8/YOLOv10 (better accuracy/speed trade-offs) or YOLO-NAS (Neural Architecture Search optimized).
 
-##### 5. Batch Size
+### 5. Batch Size
 - For real-time single-stream: batch=1 (low latency).
 - For offline processing / multi-stream: increase batch size until GPU ~95–99% utilized.
 
-##### 6. NMS (Non-Max Suppression)
+### 6. NMS (Non-Max Suppression)
 - Run NMS on GPU (available in TensorRT, ONNX, Ultralytics YOLO).
 - Avoid Python loops for NMS → huge bottleneck.
 
-##### 7. Graph & Kernel Optimizations
+### 7. Graph & Kernel Optimizations
 - CUDA Graphs (PyTorch 2.0+): remove Python overhead.
 - Enable cudnn.benchmark = True for variable input sizes.
 - Fuse layers where possible (TensorRT automatically does this).
 
-##### 8. Post-processing
+### 8. Post-processing
 - Vectorized tensor ops instead of per-box loops.
 - Keep outputs on GPU until the very last step.
 
