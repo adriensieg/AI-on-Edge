@@ -28,16 +28,16 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
    - Isolate “clean” cores by moving OS background daemons to other cores.
 - **CPU frequency scaling**
    - Disable frequency scaling (use performance governor).
-   - Avoid thermal throttling → add heatsink/fan if necessary.
+   - Avoid thermal throttling → add `heatsink`/`fan` if necessary.
 - **Threads vs Hyperthreads**
-   - Disable SMT (if hardware supports) if it adds contention.
+   - Disable `SMT` (if hardware supports) if it adds contention.
    - Stick to physical cores for predictability. 
 - **GPU / NPU / TPU**
-   - If your Pi has an attached Coral USB/PCIe TPU, Movidius NCS2, or built-in GPU, offload YOLO inference.
-   - Quantized models (`int8`, `fp16`) are critical here
+   - ~~If your Pi has an attached Coral USB/PCIe TPU, Movidius NCS2, or built-in GPU, offload YOLO inference.~~
+   - Quantized models (`int8`, `fp16`)
 - **Memory (DRAM)**
    - Ensure sufficient RAM headroom to avoid swap.
-   - Reduce memory latency: prefer single-bank allocations, lock important pages into RAM (mlock).
+   - Reduce memory latency: prefer \color{red}single-bank allocations, lock important pages into RAM (mlock).
 - **Cache (L1/L2/L3)**
    - Structure data to maximize cache locality (tensor layout matters). Tensor layout tuning (e.g., NHWC vs NCHW).
    - Warm-cache core pinning.
