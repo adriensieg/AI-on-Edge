@@ -1,18 +1,5 @@
 # Optimization
 
-## Unrelated notes
-- Multitasking & Processes
-- Threads and Multithreading
-- Context switch
-- Thread Scheduler
-- Mutual Exclusion
-- Thread Contention
-- Concurrency vs Parallelism
-- MultiProcessor vs MultiCore vs Hyper-threading
-- Threads and CPU cache
-  
-https://www.logicbig.com/quick-info/programming/multi-threading.html
-
 ```
 Application code
    ↑
@@ -237,11 +224,28 @@ Consider YOLOv8/YOLOv10 (better accuracy/speed trade-offs) or YOLO-NAS (Neural A
 | Latency         | High (pipeline bottlenecks)  | Low, real-time                     |
 
 
+## Training Optimization Checklist (YOLO)
+- Use mixed precision (AMP).
+- Maximize batch size per GPU (with gradient accumulation if needed).
+- Accelerate augmentation (DALI, CV-CUDA, Albumentations).
+- Enable dataset caching / sharding.
+- Train with DDP on multiple GPUs.
+- Optimize optimizer (SGD/AdamW) + scheduler (cosine).
+- Apply Mosaic/MixUp/Label smoothing for stronger models.
 
 
-
-
-
+## Unrelated notes
+- Multitasking & Processes
+- Threads and Multithreading
+- Context switch
+- Thread Scheduler
+- Mutual Exclusion
+- Thread Contention
+- Concurrency vs Parallelism
+- MultiProcessor vs MultiCore vs Hyper-threading
+- Threads and CPU cache
+  
+https://www.logicbig.com/quick-info/programming/multi-threading.html
 
 
 
