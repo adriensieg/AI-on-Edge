@@ -37,7 +37,7 @@ If hyper-threading is supported by the CPU, then there are 2 threads per core, o
    - Quantized models (`int8`, `fp16`)
 - **Memory (DRAM)**
    - Ensure sufficient RAM headroom to avoid swap.
-   - Reduce memory latency: prefer $$\color{blue}[single-bank allocations]$$, $$\color{blue}[lock important pages]$$ into RAM (`mlock`).
+   - Reduce memory latency: prefer single-bank allocations, lock important pagesinto RAM (`mlock`).
 - **Cache (L1/L2/L3)**
    - Structure data to maximize $$\color{blue}cache locality (tensor layout matters)$$. Tensor layout tuning (e.g., NHWC vs NCHW).
       - `N`: Number of data samples.
