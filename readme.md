@@ -1,6 +1,26 @@
 # Computer Vision on Edge
 
-## The layout of the project
+
+# The layout of the project
+
+## Core Infrastructure
+- `main.py`: Clean entry point that simply creates and runs the app
+- `app/core/config.py`: Centralized configuration using Pydantic Settings
+- `app/core/logging_config.py`: Structured logging setup
+
+## Data Models
+- `app/models/detection.py`: Pydantic models for type-safe API responses and data validation
+
+## API Layers
+- `app/api/main.py`: FastAPI application factory with lifespan management
+- Route modules: Separated by functionality (web interface, video streaming, REST API)
+
+## Service
+
+- `VideoProcessor`: Handles YOLO model loading and frame processing
+- `CameraManager`: Manages camera initialization, configuration, and frame capture
+- `StreamManager`: Orchestrates the entire video streaming pipeline
+- `WebSocketManager`: Handles real-time WebSocket connections
 
 ```
 yolo-detection-system/
