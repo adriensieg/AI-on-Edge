@@ -129,9 +129,8 @@ Use the latest YOLO family build you’ve standardized on (e.g., Ultralytics YOL
 yolo export model=yolov8n.pt format=engine half=True imgsz=640.
 For INT8, run calibration on representative frames.
 
-NMS on GPU (built-in for TRT engines) to avoid CPU bottlenecks. If staying in PyTorch, use a GPU NMS kernel.
-
-Tile / stride: For high-res cameras, consider tiling with overlap to keep per-tile size near model size (if you need small objects at distance), and fuse results.
+- NMS on GPU (built-in for TRT engines) to avoid CPU bottlenecks. If staying in PyTorch, use a GPU NMS kernel.
+- Tile / stride: For high-res cameras, consider tiling with overlap to keep per-tile size near model size (if you need small objects at distance), and fuse results.
     
 ## Observability & Tuning
 - Latency per frame (end-to-end, not just inference).
@@ -147,7 +146,7 @@ Tile / stride: For high-res cameras, consider tiling with overlap to keep per-ti
 - avoid copies,
 - and match the model’s expected input efficiently.
 
-##### 1. Image Sizing & Resizing
+#### 1. Image Sizing & Resizing
 - Resize to network input size (e.g., `640×640`) as early as possible.
 - Use GPU-accelerated resizing:
 - NVIDIA CV-CUDA or NPP libraries.
@@ -155,28 +154,27 @@ Tile / stride: For high-res cameras, consider tiling with overlap to keep per-ti
 - GStreamer elements (nvvidconv) in DeepStream pipelines.
 - Avoid resizing twice (camera driver → CPU → GPU). Keep one resize in GPU space.
 
-##### 2. Color Space Conversion
+#### 2. Color Space Conversion
 - Most YOLO models expect RGB:
 - Convert from BGR (OpenCV default) on GPU if possible.
 - In DeepStream: set video-convert or nvvidconv to output NV12 → RGBA → RGB.
 
-##### 3. Normalization & Scaling
+#### 3. Normalization & Scaling
 - Divide pixel values by 255.0 and optionally subtract mean/scale if the model requires.
 - Do this on GPU tensors to avoid CPU-bound loops.
 
-##### 4. Batch Preprocessing
+#### 4. Batch Preprocessing
 - Preprocess in batches when possible — less kernel-launch overhead.
 - Use frameworks like NVIDIA DALI or CV-CUDA for end-to-end GPU pipelines.
 
-##### 5. Memory & Copy Efficiency
+#### 5. Memory & Copy Efficiency
 - Pinned memory for CPU→GPU transfers.
 - Use .to(device, non_blocking=True) in PyTorch.
 - For streaming: leverage zero-copy DMA (dmabuf) with GStreamer + DeepStream.
 
-
 ## YOLO Model Optimization (Inference Focus)
 
-### 1. Model Export & Runtime
+#### 1. Model Export & Runtime
 - TensorRT Engine (preferred for NVIDIA GPUs):
 - Export to TRT with FP16 or INT8.
 - Example: yolo export model=yolov8n.pt format=engine imgsz=640 half=True
@@ -184,36 +182,36 @@ Tile / stride: For high-res cameras, consider tiling with overlap to keep per-ti
 - Torch-TensorRT for PyTorch integration.
 - For CPU inference only: export to OpenVINO (Intel) or ONNX Runtime (CPU EP).
 
-### 2. Precision Optimization
+#### 2. Precision Optimization
 - FP16 (half-precision) → ~2× speedup on supported GPUs.
 - INT8 quantization (with calibration dataset) → ~3–4× speedup with minimal accuracy drop.
 
-### 3. Input Resolution
+#### 3. Input Resolution
 - Use the smallest image size that still meets detection accuracy:
   - 320×320 or 416×416 for fast, low-latency inference.
   - 640×640 default for balanced accuracy/speed.
   - Larger sizes (1280+) only if needed for small/distant objects.
 
-### 4. Model Variants
+#### 4. Model Variants
 Choose the right YOLO variant:
 - n (nano) or s (small) for edge devices.
 - m, l, x for higher accuracy on GPUs.
 Consider YOLOv8/YOLOv10 (better accuracy/speed trade-offs) or YOLO-NAS (Neural Architecture Search optimized).
 
-### 5. Batch Size
+#### 5. Batch Size
 - For real-time single-stream: batch=1 (low latency).
 - For offline processing / multi-stream: increase batch size until GPU ~95–99% utilized.
 
-### 6. NMS (Non-Max Suppression)
+#### 6. NMS (Non-Max Suppression)
 - Run NMS on GPU (available in TensorRT, ONNX, Ultralytics YOLO).
 - Avoid Python loops for NMS → huge bottleneck.
 
-### 7. Graph & Kernel Optimizations
+#### 7. Graph & Kernel Optimizations
 - CUDA Graphs (PyTorch 2.0+): remove Python overhead.
 - Enable cudnn.benchmark = True for variable input sizes.
 - Fuse layers where possible (TensorRT automatically does this).
 
-### 8. Post-processing
+#### 8. Post-processing
 - Vectorized tensor ops instead of per-box loops.
 - Keep outputs on GPU until the very last step.
 
