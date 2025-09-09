@@ -46,6 +46,7 @@ yolo-detection-system/
 │   │   ├── video_processor.py     # YOLO video processing
 │   │   ├── camera_manager.py      # Camera initialization and management
 │   │   ├── stream_manager.py      # Video streaming orchestration
+│   │   ├── performance_monitor.py # Monitor performance
 │   │   └── websocket_manager.py   # WebSocket connection management
 │   │
 │   └── api/                       # API routes and endpoints
