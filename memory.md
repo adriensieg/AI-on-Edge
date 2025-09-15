@@ -1,3 +1,45 @@
+
+## Concepts to master
+
+- malloc()
+- free()
+- realloc()
+- calloc()
+- Heap memory vs. stack memory
+- Heap map
+- Heap fragmentation
+- Virtual memory
+- Physical Memory
+- MMU
+- The Dangers of the Large Object Heap
+- CPU cycles
+- Cache trash
+- Fragmentation and Garbage Collection
+- Arena / pool / block
+- Memory leak
+- Virtual cache (page cache)
+- TLB (Translation Lookaside Buffer)
+- Swapping
+- Address space
+- Unique pointers
+- Shared pointers
+- Weak pointers
+- Heap Fragmentation
+- Variables and Memory
+
+## Pointers in C++
+
+```cpp
+int main() {
+    int i = 6;
+    int* ptr = nullptr;
+    ptr = &i;
+    *ptr = 10;
+}
+```
+
+
+
 https://runestone.academy/ns/books/published/cpp4python/index.html
 https://www.w3schools.com/cpp/cpp_function_overloading.asp
 
@@ -10,18 +52,6 @@ https://www.brendangregg.com/FlameGraphs/memoryflamegraphs.html
 
 https://rushter.com/blog/python-memory-managment/
 https://cpp4arduino.com/2018/11/06/what-is-heap-fragmentation.html
-
-- malloc()
-- free()
-- realloc()
-- calloc()
-- Heap memory vs. stack memory
-- Heap fragmentation
-- Virtual memory
-- The Dangers of the Large Object Heap
-- CPU cycles
-- Cache trash
-- Fragmentation and Garbage Collection
   
 <img width="489" height="630" alt="image" src="https://github.com/user-attachments/assets/9211c157-bb29-4a4d-b20a-d6d444aec478" />
 
