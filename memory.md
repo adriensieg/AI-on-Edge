@@ -1,7 +1,7 @@
 https://runestone.academy/ns/books/published/cpp4python/index.html
 https://www.w3schools.com/cpp/cpp_function_overloading.asp
 
-<img width="50%" height="50%" alt="image" src="https://github.com/user-attachments/assets/91befaa1-1b91-46d1-9b8d-f24bd08dae3c" />
+<img width="20%" height="20%" alt="image" src="https://github.com/user-attachments/assets/91befaa1-1b91-46d1-9b8d-f24bd08dae3c" />
 
 
 <img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/22d13fd2-b5ed-4457-86be-bb06e02b4aee" />
