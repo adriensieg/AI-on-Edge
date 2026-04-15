@@ -75,6 +75,11 @@ BGR frame (numpy)
 - The server yields events one at a time; the browser receives them incrementally. Format is data: {json}\n\n. The client uses EventSource JS API to listen.
 - This is why you see results frame-by-frame in the browser instead of waiting for the full video to process.
 
+### yield — generator function
+`event_stream()` is an async generator. It produces values lazily — each yield sends one SSE event and suspends until the consumer (the HTTP response) asks for the next. The whole video never sits in memory at once.
+
+response_schema=ImageAnalysis — structured output
+Without a schema, Gemini returns freeform text. With response_schema=ImageAnalysis (a Pydantic model), Gemini is constrained to output valid JSON matching that schema — guaranteed fields status, event, tray_id. This is called constrained decoding — the model's token sampling is steered to only produce valid structure.
 
 ## Which should you use for Gemini?
 
@@ -108,3 +113,90 @@ Cores 1, 2, 3 are completely unused for your Python code. The threads are not "o
 `ThreadPoolExecutor`: All threads live in one process, sharing the GIL. Threads that block on I/O release the GIL — so I/O-bound tasks get real concurrency. CPU-bound tasks fight for the GIL and run one-at-a-time. No true parallelism for Python code.
 
 With `ProcessPoolExecutor`: Now each worker is a completely separate process. Core 0 runs your main process (event loop). Core 1 runs worker process 1 with its own GIL. Core 2 runs worker process 2 with its own GIL. Core 3 runs worker process 3 with its own GIL. They never share a GIL, they never compete, and they genuinely execute Python at the same clock tick. That's true parallelism.
+
+
+# Force the output
+
+```python
+
+# Pydantic model — defines the exact JSON shape Gemini must return
+class ImageAnalysis(BaseModel):
+    status: str
+    event: str
+    tray_id: int
+
+# "async def" — this is a coroutine, it can pause without blocking the event loop
+# "yield" inside makes it an async generator — caller receives values one at a time via SSE
+async def event_stream():
+    cap        = cv2.VideoCapture(str(video_path))          # open video file as a frame stream
+    fps        = cap.get(cv2.CAP_PROP_FPS) or 25            # frames per second; fallback to 25 if unreadable
+    total      = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))     # total frames in the video
+    frame_step = max(1, int(fps * interval))                 # skip this many frames between analyses (sampling rate)
+    frame_idx  = 0
+
+    try:
+        # SSE format: each message is "data: <json>\n\n" — the double newline signals end of event
+        yield f"data: {json.dumps({'type': 'meta', 'fps': fps, 'total': total, 'duration': total / fps})}\n\n"
+
+        while True:
+            ret, frame = cap.read()   # ret=False means no more frames (end of video)
+            if not ret:
+                break
+
+            if frame_idx % frame_step == 0:              # modulo — only process every Nth frame
+                timestamp = frame_idx / fps              # convert frame number to wall-clock seconds
+                img_bytes = frame_to_jpeg_bytes(frame, JPEG_QUALITY, MAX_WIDTH)  # compress frame to JPEG bytes
+
+                try:
+                    # to_thread — runs the blocking Gemini HTTP call in a thread pool
+                    # so "await" suspends THIS coroutine but keeps the event loop free for others
+                    response = await asyncio.to_thread(
+                        client.models.generate_content,
+                        model=MODEL,
+                        contents=[
+                            types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),  # frame as multimodal input
+                            prompt,
+                        ],
+                        config=types.GenerateContentConfig(
+                            max_output_tokens=100,
+                            response_mime_type="application/json",   # tell Gemini to return JSON
+                            response_schema=ImageAnalysis,           # enforce the exact fields above
+                        )
+                    )
+                    text = response.text.strip()
+
+                except Exception as e:                               # per-frame error — don't crash the whole stream
+                    text = f"[API error: {type(e).__name__}: {e}]"
+                    print(f"ERROR at frame {frame_idx}: {e}")
+
+                # yield — suspends here, sends this chunk to the client, then resumes on next iteration
+                yield f"data: {json.dumps({'type': 'analysis', 'timestamp': round(timestamp, 2), 'frame_index': frame_idx, 'total': total, 'text': text})}\n\n"
+
+            frame_idx += 1
+
+    except Exception as e:                                           # outer catch — handles video read errors
+        print(f"STREAM ERROR: {e}")
+        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+    finally:
+        cap.release()                                                # finally — guaranteed cleanup even if an exception fired
+
+    yield f"data: {json.dumps({'type': 'done'})}\n\n"               # signals the client the stream is finished
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
