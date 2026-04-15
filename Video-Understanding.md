@@ -4,8 +4,10 @@
 
 ### 1. The I/O Blocking Issue - Blocking vs. Non-blocking I/O.
 - A "blocking" call stops all execution until it gets an answer.
-- If we didn't `use asyncio.to_thread`, our entire FastAPI server would freeze. 
+- If we didn't use `asyncio.to_thread`, our entire FastAPI server would freeze. 
 - **No other users could load the page**, and the SSE connection would likely time out because the Event Loop couldn't send "heartbeat" packets.
+
+- When we use `asyncio.to_thread`, the OS has to **"save the state" of the Event Loop** and **"load the state" of the Worker Thread**. If you **spawn too many threads**, the CPU spends **more time switching between them than** actually **processing images**.
 
 ### 2. The Sequential Latency Stack - Serial Execution
 - Tasks are executed one after another in a single line.
@@ -14,13 +16,19 @@
 - Gemini takes ~1.5s to respond. If we have **100 frames** and process them as **Subroutines**, our total time is $100 \times 1.5s = 150s$
 
 ### 3. The Decoding Overhead - CPU-Bound Redundancy
+- `cap.read()` decodes every single frame. If your interval is `2.0s` and your video is `30fps`, you are decoding `59 frames` just to reach the `60th`.
+- This **wastes CPU cycles** and **slows down the loop**, especially on **high-resolution** or **long videos**.
+- Reading an entire book just to find the page number of the last chapter.
 
 ### 4. The Memory Pressure - Backpressure
+- The ability of a system to signal the data producer to slow down because the **consumer is overwhelmed**.
+- Currently, we don't have this because we process serially. But if we try to **go parallel without** a `Semaphore` or `Queue`, **we would spawn 100 threads at once**.
+- Each thread would hold a JPEG in RAM. **100 high-res JPEGs** can easily **crash a small server** or **exceed the Gemini API rate limits instantly.
+- Metaphor: A firehose trying to fill a tea cup.
 
 ### 5. The Stateless Connection - Persistence & Idempotency
 
-
-The Compute/Network Split (The "GIL Wall") - Parallelism vs. Concurrency
+### 6. The Compute/Network Split (The "GIL Wall") - Parallelism vs. Concurrency
 
 # The Solution
 
