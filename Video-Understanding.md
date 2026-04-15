@@ -175,7 +175,7 @@ is equivalent to calling client.models.generate_content(model=MODEL, contents=[.
 - Parallelism (Multiple CPUs, Multiple Tasks) - `multiprocessing`
 
 
-- yield / async generator vs. Return
+- yield / async generator vs. Return - iterator / iterable
 - GIL (Global Interpreter Lock)
 - Future / Task
 - Cooperative vs preemptive scheduling
@@ -189,8 +189,6 @@ Cores 1, 2, 3 are completely unused for your Python code. The threads are not "o
 
 With `ProcessPoolExecutor`: Now each worker is a completely separate process. Core 0 runs your main process (event loop). Core 1 runs worker process 1 with its own GIL. Core 2 runs worker process 2 with its own GIL. Core 3 runs worker process 3 with its own GIL. They never share a GIL, they never compete, and they genuinely execute Python at the same clock tick. That's true parallelism.
 
-
-# Force the output
 
 
 
