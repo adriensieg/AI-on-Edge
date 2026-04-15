@@ -71,7 +71,7 @@ BGR frame (numpy)
 - The **Gemini API** receives this **binary blob** + the `mime_type="image/jpeg"` hint so it knows how to decode it.
 
 ### SSE — Server-Sent Events
-- StreamingResponse with media_type="text/event-stream" keeps an HTTP connection open.
+- `StreamingResponse` with `media_type="text/event-stream"` keeps an **HTTP connection open**.
 - The server yields events one at a time; the browser receives them incrementally. Format is data: {json}\n\n. The client uses EventSource JS API to listen.
 - This is why you see results frame-by-frame in the browser instead of waiting for the full video to process.
 
@@ -79,9 +79,9 @@ BGR frame (numpy)
 `event_stream()` is an `async generator`. It produces values lazily — each yield sends one SSE event and suspends until the consumer (the HTTP response) asks for the next. The whole video never sits in memory at once.
 
 ### response_schema=ImageAnalysis — structured output
-Without a schema, Gemini returns freeform text. 
+Without a schema, Gemini returns **freeform text**. 
 
-With response_schema=ImageAnalysis (a Pydantic model), Gemini is constrained to output valid JSON matching that schema — guaranteed fields status, event, tray_id. This is called constrained decoding — the model's token sampling is steered to only produce valid structure.
+With `response_schema=ImageAnalysis` (a Pydantic model), Gemini is constrained to **output valid JSON matching that schema** — guaranteed fields `status`, `event`, `tray_id`. This is called **constrained decoding** — the model's token sampling is steered to only produce valid structure.
 
 ```python
 # Pydantic model — defines the exact JSON shape Gemini must return
@@ -127,7 +127,7 @@ try:
 
 
 
-client.models.generate_content(...) is a plain blocking function — it makes an HTTP request to Gemini and just sits there waiting for the response, freezing whatever thread runs it. If you called it directly inside your async coroutine, it would freeze the entire event loop — no other frames could be processed, no other requests could be served, nothing.
+`client.models.generate_content(...)` is a plain blocking function — it makes an HTTP request to Gemini and just sits there waiting for the response, freezing whatever thread runs it. If you called it directly inside your async coroutine, it would freeze the entire event loop — no other frames could be processed, no other requests could be served, nothing.
 What asyncio.to_thread does
 It takes that blocking function and hands it off to a worker thread from Python's default thread pool. Your coroutine then does await — which means it suspends itself and hands control back to the event loop. The event loop is now free to run other coroutines (process other frames, serve other HTTP requests) while the Gemini call is sitting in that worker thread waiting for a network response.
 When Gemini eventually replies, the thread finishes, and the event loop wakes your coroutine back up right at the response = line with the result.
@@ -175,12 +175,11 @@ is equivalent to calling client.models.generate_content(model=MODEL, contents=[.
 - Parallelism (Multiple CPUs, Multiple Tasks) - `multiprocessing`
 
 
-- yield / async generator
+- yield / async generator vs. Return
 - GIL (Global Interpreter Lock)
 - Future / Task
 - Cooperative vs preemptive scheduling
 - asyncio.run() / uvicorn
-
 
 With `ThreadPoolExecutor`: All your threads — the main thread, worker 1, worker 2, worker 3, worker 4 — live inside one single process. 
 That process runs on Core 0. The OS can physically shuffle it to Core 1 or Core 2, but it doesn't matter, because the GIL means only one thread runs Python at any moment anyway. 
