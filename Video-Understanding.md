@@ -2,12 +2,25 @@
 
 # The Problem Statement
 
-### 1. The I/O Blocking Issue
+### 1. The I/O Blocking Issue - Blocking vs. Non-blocking I/O.
+- A "blocking" call stops all execution until it gets an answer.
+- If we didn't `use asyncio.to_thread`, our entire FastAPI server would freeze. 
+- **No other users could load the page**, and the SSE connection would likely time out because the Event Loop couldn't send "heartbeat" packets.
 
-If we didn't `use asyncio.to_thread`, our entire FastAPI server would freeze. 
-No other users could load the page, and the SSE connection would likely time out because the Event Loop couldn't send "heartbeat" packets.
+### 2. The Sequential Latency Stack - Serial Execution
+- Tasks are executed one after another in a single line.
+- Our `while` `True` loop reads a frame, waits for Gemini, then moves to the next.
+- Even with `to_thread`, **we are only processing one frame at a time**.
+- Gemini takes ~1.5s to respond. If we have **100 frames** and process them as **Subroutines**, our total time is $100 \times 1.5s = 150s$
 
-A "blocking" call stops all execution until it gets an answer.
+### 3. The Decoding Overhead - CPU-Bound Redundancy
+
+### 4. The Memory Pressure - Backpressure
+
+### 5. The Stateless Connection - Persistence & Idempotency
+
+
+The Compute/Network Split (The "GIL Wall") - Parallelism vs. Concurrency
 
 # The Solution
 
